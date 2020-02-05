@@ -1,4 +1,4 @@
-# Pod dive
+# Pod restarts
 
 ![lists all restarts in your cluster and pods last start time](logo-256.png)
 
