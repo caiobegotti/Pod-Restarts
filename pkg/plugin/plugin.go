@@ -63,11 +63,7 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 			containersCount := containerStatuses.RestartCount
 			if containersCount != int32(0) {
 				if listContainers {
-					if listThreshold != int32(0) {
-						if totalRestarts > listThreshold {
-							tbl.AddRow(pod.GetNamespace(), containersCount, pod.GetName()+"/"+containerStatuses.Name, pod.Status.StartTime)
-						}
-					}
+					tbl.AddRow(pod.GetNamespace(), containersCount, pod.GetName()+"/"+containerStatuses.Name, pod.Status.StartTime)
 				}
 				totalRestarts += containersCount
 			}
@@ -77,11 +73,7 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 			initContainersCount := initContainerStatuses.RestartCount
 			if initContainersCount != int32(0) {
 				if listContainers {
-					if listThreshold != int32(0) {
-						if totalRestarts > listThreshold {
-							tbl.AddRow(pod.GetNamespace(), initContainersCount, pod.GetName()+"/"+initContainerStatuses.Name, pod.Status.StartTime)
-						}
-					}
+					tbl.AddRow(pod.GetNamespace(), initContainersCount, pod.GetName()+"/"+initContainerStatuses.Name, pod.Status.StartTime)
 				}
 				totalRestarts += initContainersCount
 			}
