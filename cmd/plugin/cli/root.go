@@ -51,12 +51,12 @@ $ kubectl pod-restarts -n production`,
 
 	cobra.OnInitialize(initConfig)
 
-	// extra flags to our plugin
-	cmd.Flags().BoolP("containers", "c", false, "Lists containers and their restarts instead.")
-	cmd.Flags().IntP("threshold", "t", 0, "Only list restarts above this threshold.")
-
 	KubernetesConfigFlags = genericclioptions.NewConfigFlags(false)
 	KubernetesConfigFlags.AddFlags(cmd.Flags())
+
+	// extra flags to our plugin
+	cmd.Flags().BoolP("containers", "c", false, "Lists containers and their restarts instead.")
+	cmd.Flags().Int32P("threshold", "t", 0, "Only list restarts above this threshold.")
 
 	// hide common flags supported by any kubectl command to declutter -h/--help
 	// most people would only (if ever) miss kubeconfig, context or cluster
@@ -78,6 +78,7 @@ $ kubectl pod-restarts -n production`,
 	cmd.Flags().MarkHidden("username")
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
 	return cmd
 }
 

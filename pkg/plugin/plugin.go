@@ -5,7 +5,9 @@ import (
 
 	"github.com/gosuri/uitable"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -42,6 +44,10 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 	// we will seek the whole cluster if namespace is not passed as a flag (it will be a "" string)
 	podFind, err := pd.Clientset.CoreV1().Pods(namespace).List(metav1.ListOptions{})
 
+	v := viper.GetViper()
+	listContainers := v.GetBool("containers")
+	listThreshold := v.GetInt32("threshold")
+
 	if err != nil || len(podFind.Items) == 0 {
 		return errors.New("Failed to get pods data: check your parameters, set a context or verify API server.")
 	}
@@ -53,10 +59,12 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 		// RestartCount are all int32
 		var totalRestarts int32 = 0
 
-		// if -c/--containers list names
 		for _, containerStatuses := range pod.Status.ContainerStatuses {
 			containersCount := containerStatuses.RestartCount
 			if containersCount != int32(0) {
+				if listContainers {
+					tbl.AddRow(pod.GetNamespace(), containersCount, pod.GetName()+"/"+containerStatuses.Name, pod.Status.StartTime)
+				}
 				totalRestarts += containersCount
 			}
 		}
@@ -64,13 +72,23 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 		for _, initContainerStatuses := range pod.Status.InitContainerStatuses {
 			initContainersCount := initContainerStatuses.RestartCount
 			if initContainersCount != int32(0) {
+				if listContainers {
+					tbl.AddRow(pod.GetNamespace(), initContainersCount, pod.GetName()+"/"+initContainerStatuses.Name, pod.Status.StartTime)
+				}
 				totalRestarts += initContainersCount
 			}
 		}
 
 		if totalRestarts != int32(0) {
-			// if -t/--threshold, print > N
-			tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), pod.Status.StartTime)
+			if listThreshold != int32(0) {
+				if totalRestarts > listThreshold {
+					tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), pod.Status.StartTime)
+				}
+			} else {
+				if !listContainers {
+					tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), pod.Status.StartTime)
+				}
+			}
 			allRestarts += totalRestarts
 		}
 	}
