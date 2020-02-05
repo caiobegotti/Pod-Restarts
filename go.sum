@@ -105,10 +105,6 @@ github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869/go.mod h1:Ekp36dR
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/bradfitz/go-smtpd v0.0.0-20170404230938-deb6d6237625/go.mod h1:HYsPBTaaSFSlLx/70C2HPIMNZpVV8+vt/A+FMnYP11g=
 github.com/briankassouf/jose v0.9.1/go.mod h1:HQhVmdUf7dBNwIIdBTivnCDxcf6IZY3/zrb+uKSJz6Y=
-github.com/caiobegotti/node-dive v0.0.0-20191213204158-945d335c69da h1:z3yupSbF/kmVJ0f3/zwt6ReaT81YWv6txigWUMgPVPs=
-github.com/caiobegotti/node-dive v0.0.0-20191213204158-945d335c69da/go.mod h1:NEoF9vbE3s1QQkELQhmB+KCnaYZjtLhIJkSCHxKqJM8=
-github.com/caiobegotti/pod-dive v0.1.4 h1:wT7/nJjq/DpGmNa/v9QJEbKu3XUzgbLMLj2aoWUuUBY=
-github.com/caiobegotti/pod-dive v0.1.4/go.mod h1:5oBS+WRnu3ES2uFJKqi+WiYZFNCs0+XlkB3dIhPwMHY=
 github.com/cenkalti/backoff v2.0.0+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/cenkalti/backoff v2.1.1+incompatible/go.mod h1:90ReRw6GdpyfrHakVjL/QHaoyV4aDUVVkXQJJJ3NXXM=
 github.com/census-instrumentation/opencensus-proto v0.2.0 h1:LzQXZOgg4CQfE6bFvXGM30YZL1WW/M337pXml+GrcZ4=
