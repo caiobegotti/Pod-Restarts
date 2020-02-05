@@ -51,6 +51,10 @@ $ kubectl pod-restarts -n production`,
 
 	cobra.OnInitialize(initConfig)
 
+	// extra flags to our plugin
+	cmd.Flags().BoolP("containers", "c", false, "Lists containers and their restarts instead.")
+	cmd.Flags().IntP("threshold", "t", 0, "Only list restarts above this threshold.")
+
 	KubernetesConfigFlags = genericclioptions.NewConfigFlags(false)
 	KubernetesConfigFlags.AddFlags(cmd.Flags())
 
