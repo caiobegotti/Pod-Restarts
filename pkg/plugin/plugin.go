@@ -34,7 +34,19 @@ type sortablePods []StructuredPod
 func (s sortablePods) Len() int { return len(s) }
 
 func (s sortablePods) Less(i, j int) bool {
-	return s[i].restarts < s[j].restarts
+	v := viper.GetViper()
+	sortBy := v.Get("sort-by")
+
+	switch sortBy {
+	case "restarts":
+		return s[i].restarts < s[j].restarts
+	case "age":
+		return s[i].age < s[j].age
+	case "start":
+		return s[i].start < s[j].start
+	}
+
+	return s[i].namespace < s[j].namespace
 }
 
 func (s sortablePods) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
@@ -72,6 +84,7 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 	v := viper.GetViper()
 	listContainers := v.GetBool("containers")
 	listThreshold := v.GetInt32("threshold")
+	listSortBy := v.Get("sort-by")
 
 	tbl.AddRow("NAMESPACE", "RESTARTS", "NAME", "AGE", "START")
 
@@ -158,7 +171,10 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 		}
 	}
 
-	sort.Sort(sortablePods(allStructuredPods))
+	if listSortBy != "" {
+		sort.Sort(sortablePods(allStructuredPods))
+	}
+
 	for _, pod := range allStructuredPods {
 		tbl.AddRow(
 			pod.namespace,

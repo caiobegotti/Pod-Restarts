@@ -59,9 +59,11 @@ $ kubectl pod-restarts -c`,
 	KubernetesConfigFlags = genericclioptions.NewConfigFlags(false)
 	KubernetesConfigFlags.AddFlags(cmd.Flags())
 
+	var sortby string
 	// extra flags to our plugin
 	cmd.Flags().BoolP("containers", "c", false, "Also lists containers restarts, ignoring thresholds")
 	cmd.Flags().Int32P("threshold", "t", 0, "Only list restarts above the given threshold")
+	cmd.Flags().StringVar(&sortby, "sort-by", "", "Sort results by: restarts, age, start")
 
 	// hide common flags supported by any kubectl command to declutter -h/--help
 	// most people would only (if ever) miss kubeconfig, context or cluster
