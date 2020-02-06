@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/gosuri/uitable"
@@ -19,6 +20,24 @@ type PodRestartsPlugin struct {
 	Clientset *kubernetes.Clientset
 	PodObject *v1.Pod
 }
+
+type StructuredPod struct {
+	namespace string
+	restarts  int32
+	name      string
+	age       string
+	start     string
+}
+
+type sortablePods []StructuredPod
+
+func (s sortablePods) Len() int { return len(s) }
+
+func (s sortablePods) Less(i, j int) bool {
+	return s[i].restarts < s[j].restarts
+}
+
+func (s sortablePods) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
 
 func NewPodRestartsPlugin(configFlags *genericclioptions.ConfigFlags) (*PodRestartsPlugin, error) {
 	config, err := configFlags.ToRESTConfig()
@@ -57,7 +76,14 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 	tbl.AddRow("NAMESPACE", "RESTARTS", "NAME", "AGE", "START")
 
 	var allRestarts int32 = 0
-	for _, pod := range podFind.Items {
+	pods := podFind.Items
+
+	// sort.Slice(pods, func(i, j int) bool {
+	// 	return pods[i].Name < pods[j].Name
+	// })
+
+	allStructuredPods := []StructuredPod{}
+	for _, pod := range pods {
 		// restarts in the API are all int32
 		var totalRestarts int32 = 0
 
@@ -80,14 +106,15 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 
 		for _, containerStatuses := range pod.Status.ContainerStatuses {
 			containersCount := containerStatuses.RestartCount
-			if containersCount != int32(0) {
+			if containersCount != 0 {
 				if listContainers {
-					tbl.AddRow(
+					var thisPod = StructuredPod{
 						pod.GetNamespace(),
 						containersCount,
-						pod.GetName()+"/"+containerStatuses.Name,
+						pod.GetName() + "/" + containerStatuses.Name,
 						startTimePretty,
-						pod.Status.StartTime)
+						pod.Status.StartTime.String()}
+					allStructuredPods = append(allStructuredPods, thisPod)
 				}
 				totalRestarts += containersCount
 			}
@@ -95,43 +122,56 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 
 		for _, initContainerStatuses := range pod.Status.InitContainerStatuses {
 			initContainersCount := initContainerStatuses.RestartCount
-			if initContainersCount != int32(0) {
+			if initContainersCount != 0 {
 				if listContainers {
-					tbl.AddRow(
+					var thisPod = StructuredPod{
 						pod.GetNamespace(),
 						initContainersCount,
-						pod.GetName()+"/"+initContainerStatuses.Name,
+						pod.GetName() + "/" + initContainerStatuses.Name,
 						startTimePretty,
-						pod.Status.StartTime)
+						pod.Status.StartTime.String()}
+					allStructuredPods = append(allStructuredPods, thisPod)
 				}
 				totalRestarts += initContainersCount
 			}
 		}
 
-		if totalRestarts != int32(0) {
-			if listThreshold != int32(0) {
+		if totalRestarts != 0 {
+			if listThreshold != 0 {
 				if totalRestarts > listThreshold {
-					tbl.AddRow(
+					var thisPod = StructuredPod{
 						pod.GetNamespace(),
 						totalRestarts,
 						pod.GetName(),
 						startTimePretty,
-						pod.Status.StartTime)
+						pod.Status.StartTime.String()}
+					allStructuredPods = append(allStructuredPods, thisPod)
 				}
 			} else {
 				if !listContainers {
-					tbl.AddRow(
+					var thisPod = StructuredPod{
 						pod.GetNamespace(),
 						totalRestarts,
 						pod.GetName(),
 						startTimePretty,
-						pod.Status.StartTime)
+						pod.Status.StartTime.String()}
+					allStructuredPods = append(allStructuredPods, thisPod)
 				}
 			}
 			allRestarts += totalRestarts
 		}
-
 	}
+
+	sort.Sort(sortablePods(allStructuredPods))
+	for _, pod := range allStructuredPods {
+		tbl.AddRow(
+			pod.namespace,
+			pod.restarts,
+			pod.name,
+			pod.age,
+			pod.start)
+	}
+
 	if allRestarts == 0 {
 		fmt.Println("No restarts.")
 	} else {
