@@ -22,6 +22,7 @@ Sometimes using a `kubectl` command is much faster than running a bunch of Prome
 ## What does it look like
 
 ```
+$ kubectl pod-restarts --help
 This command prints a table with all the restarting pods inside
 your cluster and the lookup can be restricted to a specific namespace, based
 on a minimum threshold for restarts or just count containers restarts too.
