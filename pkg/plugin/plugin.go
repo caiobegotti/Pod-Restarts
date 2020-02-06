@@ -43,20 +43,22 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 
 	// we will seek the whole cluster if namespace is not passed as a flag (it will be a "" string)
 	podFind, err := pd.Clientset.CoreV1().Pods(namespace).List(metav1.ListOptions{})
+	if err != nil || len(podFind.Items) == 0 {
+		fmt.Println("Failed to get pods data: check your parameters, set a context or verify API server.")
+		return nil
+	}
 
+	// is there a more correct way to
+	// grab flags anywhere inside the code?
 	v := viper.GetViper()
 	listContainers := v.GetBool("containers")
 	listThreshold := v.GetInt32("threshold")
-
-	if err != nil || len(podFind.Items) == 0 {
-		return errors.New("Failed to get pods data: check your parameters, set a context or verify API server.")
-	}
 
 	tbl.AddRow("NAMESPACE", "RESTARTS", "NAME", "AGE", "START")
 
 	var allRestarts int32 = 0
 	for _, pod := range podFind.Items {
-		// RestartCount are all int32
+		// restarts in the API are all int32
 		var totalRestarts int32 = 0
 
 		// just so we can have pretty printing of ages
@@ -80,7 +82,11 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 			containersCount := containerStatuses.RestartCount
 			if containersCount != int32(0) {
 				if listContainers {
-					tbl.AddRow(pod.GetNamespace(), containersCount, pod.GetName()+"/"+containerStatuses.Name, startTimePretty, pod.Status.StartTime)
+					tbl.AddRow(
+						pod.GetNamespace(),
+						containersCount,
+						pod.GetName()+"/"+containerStatuses.Name,
+						startTimePretty, pod.Status.StartTime)
 				}
 				totalRestarts += containersCount
 			}
@@ -90,7 +96,12 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 			initContainersCount := initContainerStatuses.RestartCount
 			if initContainersCount != int32(0) {
 				if listContainers {
-					tbl.AddRow(pod.GetNamespace(), initContainersCount, pod.GetName()+"/"+initContainerStatuses.Name, startTimePretty, pod.Status.StartTime)
+					tbl.AddRow(
+						pod.GetNamespace(),
+						initContainersCount,
+						pod.GetName()+"/"+initContainerStatuses.Name,
+						startTimePretty,
+						pod.Status.StartTime)
 				}
 				totalRestarts += initContainersCount
 			}
@@ -99,11 +110,21 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 		if totalRestarts != int32(0) {
 			if listThreshold != int32(0) {
 				if totalRestarts > listThreshold {
-					tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), startTimePretty, pod.Status.StartTime)
+					tbl.AddRow(
+						pod.GetNamespace(),
+						totalRestarts,
+						pod.GetName(),
+						startTimePretty,
+						pod.Status.StartTime)
 				}
 			} else {
 				if !listContainers {
-					tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), startTimePretty, pod.Status.StartTime)
+					tbl.AddRow(
+						pod.GetNamespace(),
+						totalRestarts,
+						pod.GetName(),
+						startTimePretty,
+						pod.Status.StartTime)
 				}
 			}
 			allRestarts += totalRestarts

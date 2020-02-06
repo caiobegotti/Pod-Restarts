@@ -19,22 +19,27 @@ var (
 func RootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "pod-restarts",
-		Short: "Sorted table of all pods with restarts and their last start time.",
-		Long: `Dives into a node after the desired pod and returns data associated
-with the pod no matter where it is running, such as its origin workload,
-namespace, the node where it is running and its node pod siblings, as
-well basic health status of it all.
+		Short: "Sorted table of all pods with restarts and their age, start time.",
+		Long: `This command prints a table with all the restarting pods inside
+your cluster and the lookup can be restricted to a specific namespace, based
+on a minimum threshold for restarts or just count containers restarts too.
 
-The purpose is to have meaningful pod info at a glance without needing to
-run multiple kubectl commands to see what else is running next to your
-pod in a given node inside a huge cluster, because sometimes all
-you've got from an alert is the pod name.`,
+The purpose of this is to have a glance at what has been failing and since
+when, as age and start times are included in the result table. The alternative to
+that would be to run multiple shell commands with complex parsing or plot N graphs
+with Prometheus or other tool.`,
 		Example: `
 Cluster-wide listing
 $ kubectl pod-restarts
 
 Restricts listing to a namespace (faster in big clusters)
-$ kubectl pod-restarts -n production`,
+$ kubectl pod-restarts -n production
+
+Ignores pods below a specific threshold (10 restarts)
+$ kubectl pod-restarts -t 10
+
+Also lists all the containers restarting inside the pods
+$ kubectl pod-restarts -c`,
 		SilenceErrors: true,
 		SilenceUsage:  false,
 		PreRun: func(cmd *cobra.Command, args []string) {
@@ -55,8 +60,8 @@ $ kubectl pod-restarts -n production`,
 	KubernetesConfigFlags.AddFlags(cmd.Flags())
 
 	// extra flags to our plugin
-	cmd.Flags().BoolP("containers", "c", false, "Lists containers and their restarts instead.")
-	cmd.Flags().Int32P("threshold", "t", 0, "Only list restarts above this threshold.")
+	cmd.Flags().BoolP("containers", "c", false, "Also lists containers restarts, ignoring thresholds")
+	cmd.Flags().Int32P("threshold", "t", 0, "Only list restarts above the given threshold")
 
 	// hide common flags supported by any kubectl command to declutter -h/--help
 	// most people would only (if ever) miss kubeconfig, context or cluster
