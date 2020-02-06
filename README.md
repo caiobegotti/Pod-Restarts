@@ -15,10 +15,6 @@ kubectl krew install pod-restarts
 kubectl pod-restarts
 ```
 
-## Why use it
-
-Sometimes using a `kubectl` command is much faster than running a bunch of Prometheus graphs and only need a quick glance of what has been restarting lately or during a migration.
-
 ## What does it look like
 
 ```
