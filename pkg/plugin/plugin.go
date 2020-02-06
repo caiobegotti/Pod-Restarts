@@ -86,7 +86,8 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 						pod.GetNamespace(),
 						containersCount,
 						pod.GetName()+"/"+containerStatuses.Name,
-						startTimePretty, pod.Status.StartTime)
+						startTimePretty,
+						pod.Status.StartTime)
 				}
 				totalRestarts += containersCount
 			}
