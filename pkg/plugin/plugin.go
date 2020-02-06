@@ -2,12 +2,12 @@ package plugin
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gosuri/uitable"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 	v1 "k8s.io/api/core/v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
@@ -52,18 +52,35 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 		return errors.New("Failed to get pods data: check your parameters, set a context or verify API server.")
 	}
 
-	tbl.AddRow("NAMESPACE", "RESTARTS", "NAME", "LAST START")
+	tbl.AddRow("NAMESPACE", "RESTARTS", "NAME", "AGE", "START")
 
 	var allRestarts int32 = 0
 	for _, pod := range podFind.Items {
 		// RestartCount are all int32
 		var totalRestarts int32 = 0
 
+		// just so we can have pretty printing of ages
+		startTimePretty := "0"
+		startTime := time.Since(pod.Status.StartTime.Time)
+		startSeconds := startTime.Seconds()
+		startMinutes := startTime.Minutes()
+		startHours := startTime.Hours()
+		startDays := startTime.Hours() / 24
+		if startSeconds < 180 {
+			startTimePretty = fmt.Sprintf("%.0fs", startSeconds)
+		} else if startMinutes < 120 {
+			startTimePretty = fmt.Sprintf("%.0fm", startMinutes)
+		} else if startHours < 72 {
+			startTimePretty = fmt.Sprintf("%.0fh", startHours)
+		} else {
+			startTimePretty = fmt.Sprintf("%.0fd", startDays)
+		}
+
 		for _, containerStatuses := range pod.Status.ContainerStatuses {
 			containersCount := containerStatuses.RestartCount
 			if containersCount != int32(0) {
 				if listContainers {
-					tbl.AddRow(pod.GetNamespace(), containersCount, pod.GetName()+"/"+containerStatuses.Name, pod.Status.StartTime)
+					tbl.AddRow(pod.GetNamespace(), containersCount, pod.GetName()+"/"+containerStatuses.Name, startTimePretty, pod.Status.StartTime)
 				}
 				totalRestarts += containersCount
 			}
@@ -73,7 +90,7 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 			initContainersCount := initContainerStatuses.RestartCount
 			if initContainersCount != int32(0) {
 				if listContainers {
-					tbl.AddRow(pod.GetNamespace(), initContainersCount, pod.GetName()+"/"+initContainerStatuses.Name, pod.Status.StartTime)
+					tbl.AddRow(pod.GetNamespace(), initContainersCount, pod.GetName()+"/"+initContainerStatuses.Name, startTimePretty, pod.Status.StartTime)
 				}
 				totalRestarts += initContainersCount
 			}
@@ -82,15 +99,16 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 		if totalRestarts != int32(0) {
 			if listThreshold != int32(0) {
 				if totalRestarts > listThreshold {
-					tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), pod.Status.StartTime)
+					tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), startTimePretty, pod.Status.StartTime)
 				}
 			} else {
 				if !listContainers {
-					tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), pod.Status.StartTime)
+					tbl.AddRow(pod.GetNamespace(), totalRestarts, pod.GetName(), startTimePretty, pod.Status.StartTime)
 				}
 			}
 			allRestarts += totalRestarts
 		}
+
 	}
 	if allRestarts == 0 {
 		fmt.Println("No restarts.")
