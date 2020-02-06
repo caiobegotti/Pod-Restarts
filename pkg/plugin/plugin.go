@@ -78,10 +78,6 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 	var allRestarts int32 = 0
 	pods := podFind.Items
 
-	// sort.Slice(pods, func(i, j int) bool {
-	// 	return pods[i].Name < pods[j].Name
-	// })
-
 	allStructuredPods := []StructuredPod{}
 	for _, pod := range pods {
 		// restarts in the API are all int32
