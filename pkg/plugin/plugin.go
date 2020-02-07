@@ -25,7 +25,7 @@ type StructuredPod struct {
 	namespace string
 	restarts  int32
 	name      string
-	age       string
+	age       time.Time
 	start     string
 }
 
@@ -41,7 +41,7 @@ func (s sortablePods) Less(i, j int) bool {
 	case "restarts":
 		return s[i].restarts < s[j].restarts
 	case "age":
-		return s[i].age < s[j].age
+		return s[i].start > s[j].start
 	case "start":
 		return s[i].start < s[j].start
 	}
@@ -99,23 +99,6 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 		// restarts in the API are all int32
 		var totalRestarts int32 = 0
 
-		// just so we can have pretty printing of ages
-		startTimePretty := "0"
-		startTime := time.Since(pod.Status.StartTime.Time)
-		startSeconds := startTime.Seconds()
-		startMinutes := startTime.Minutes()
-		startHours := startTime.Hours()
-		startDays := startTime.Hours() / 24
-		if startSeconds < 180 {
-			startTimePretty = fmt.Sprintf("%.0fs", startSeconds)
-		} else if startMinutes < 120 {
-			startTimePretty = fmt.Sprintf("%.0fm", startMinutes)
-		} else if startHours < 72 {
-			startTimePretty = fmt.Sprintf("%.0fh", startHours)
-		} else {
-			startTimePretty = fmt.Sprintf("%.0fd", startDays)
-		}
-
 		for _, containerStatuses := range pod.Status.ContainerStatuses {
 			containersCount := containerStatuses.RestartCount
 			if containersCount != 0 {
@@ -124,7 +107,7 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 						pod.GetNamespace(),
 						containersCount,
 						pod.GetName() + "/" + containerStatuses.Name,
-						startTimePretty,
+						pod.Status.StartTime.Time,
 						pod.Status.StartTime.String()}
 					allStructuredPods = append(allStructuredPods, thisPod)
 				}
@@ -140,7 +123,7 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 						pod.GetNamespace(),
 						initContainersCount,
 						pod.GetName() + "/" + initContainerStatuses.Name,
-						startTimePretty,
+						pod.Status.StartTime.Time,
 						pod.Status.StartTime.String()}
 					allStructuredPods = append(allStructuredPods, thisPod)
 				}
@@ -155,7 +138,7 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 						pod.GetNamespace(),
 						totalRestarts,
 						pod.GetName(),
-						startTimePretty,
+						pod.Status.StartTime.Time,
 						pod.Status.StartTime.String()}
 					allStructuredPods = append(allStructuredPods, thisPod)
 				}
@@ -165,7 +148,7 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 						pod.GetNamespace(),
 						totalRestarts,
 						pod.GetName(),
-						startTimePretty,
+						pod.Status.StartTime.Time,
 						pod.Status.StartTime.String()}
 					allStructuredPods = append(allStructuredPods, thisPod)
 				}
@@ -179,11 +162,28 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 	}
 
 	for _, pod := range allStructuredPods {
+		// just so we can have pretty printing of ages
+		startTimePretty := "0"
+		startTime := time.Since(pod.age)
+		startSeconds := startTime.Seconds()
+		startMinutes := startTime.Minutes()
+		startHours := startTime.Hours()
+		startDays := startTime.Hours() / 24
+		if startSeconds < 180 {
+			startTimePretty = fmt.Sprintf("%.0fs", startSeconds)
+		} else if startMinutes < 120 {
+			startTimePretty = fmt.Sprintf("%.0fm", startMinutes)
+		} else if startHours < 72 {
+			startTimePretty = fmt.Sprintf("%.0fh", startHours)
+		} else {
+			startTimePretty = fmt.Sprintf("%.0fd", startDays)
+		}
+
 		tbl.AddRow(
 			pod.namespace,
 			pod.restarts,
 			pod.name,
-			pod.age,
+			startTimePretty,
 			pod.start)
 	}
 
