@@ -41,6 +41,9 @@ func (s sortablePods) Less(i, j int) bool {
 	case "restarts":
 		return s[i].restarts < s[j].restarts
 	case "age":
+		// sorting the start time essentially does the same thing but we can have a more
+		// meaningful table with the age of pods if the order is reversed, otherwise age
+		// is quite useless most of the time... kind of hackish, i know
 		return s[i].start > s[j].start
 	case "start":
 		return s[i].start < s[j].start
