@@ -34,6 +34,7 @@ type sortablePods []StructuredPod
 func (s sortablePods) Len() int { return len(s) }
 
 func (s sortablePods) Less(i, j int) bool {
+	// FIXME: running this inside less() feels really bad
 	v := viper.GetViper()
 	sortBy := v.Get("sort-by")
 
