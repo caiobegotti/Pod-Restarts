@@ -49,6 +49,7 @@ Flags:
   -c, --containers         Also lists containers restarts, ignoring thresholds
   -h, --help               help for pod-restarts
   -n, --namespace string   If present, the namespace scope for this CLI request
+      --sort-by string     Sort results by: restarts, age, start
   -t, --threshold int32    Only list restarts above the given threshold
 ```
 
