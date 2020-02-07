@@ -85,6 +85,9 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 	listContainers := v.GetBool("containers")
 	listThreshold := v.GetInt32("threshold")
 	listSortBy := v.Get("sort-by")
+	if !(listSortBy == "" || listSortBy == "restarts" || listSortBy == "age" || listSortBy == "start") {
+		return errors.New("Valid --sort-by options are: restarts, age and start.")
+	}
 
 	tbl.AddRow("NAMESPACE", "RESTARTS", "NAME", "AGE", "START")
 
