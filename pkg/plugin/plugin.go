@@ -107,12 +107,18 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 			containersCount := containerStatuses.RestartCount
 			if containersCount != 0 {
 				if listContainers {
+					thisContainerTime := pod.Status.StartTime.Time
+					if containerStatuses.State.Terminated != nil {
+						thisContainerTime = containerStatuses.State.Terminated.StartedAt.Time
+					} else if containerStatuses.State.Running != nil {
+						thisContainerTime = containerStatuses.State.Running.StartedAt.Time
+					}
 					var thisPod = StructuredPod{
 						pod.GetNamespace(),
 						containersCount,
 						pod.GetName() + "/" + containerStatuses.Name,
-						pod.Status.StartTime.Time,
-						pod.Status.StartTime.String()}
+						thisContainerTime,
+						thisContainerTime.String()}
 					allStructuredPods = append(allStructuredPods, thisPod)
 				}
 				totalRestarts += containersCount
@@ -123,12 +129,18 @@ func (pd *PodRestartsPlugin) findPodByPodName(namespace string) error {
 			initContainersCount := initContainerStatuses.RestartCount
 			if initContainersCount != 0 {
 				if listContainers {
+					thisInitContainerTime := pod.Status.StartTime.Time
+					if initContainerStatuses.State.Terminated != nil {
+						thisInitContainerTime = initContainerStatuses.State.Terminated.StartedAt.Time
+					} else if initContainerStatuses.State.Running != nil {
+						thisInitContainerTime = initContainerStatuses.State.Running.StartedAt.Time
+					}
 					var thisPod = StructuredPod{
 						pod.GetNamespace(),
 						initContainersCount,
 						pod.GetName() + "/" + initContainerStatuses.Name,
-						pod.Status.StartTime.Time,
-						pod.Status.StartTime.String()}
+						thisInitContainerTime,
+						thisInitContainerTime.String()}
 					allStructuredPods = append(allStructuredPods, thisPod)
 				}
 				totalRestarts += initContainersCount
