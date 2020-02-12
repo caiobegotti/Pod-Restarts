@@ -45,6 +45,9 @@ $ kubectl pod-restarts -t 10
 Also lists all the containers restarting inside the pods
 $ kubectl pod-restarts -c
 
+Sort Hashicorp's Vault pods by last start time (can be used with -c too)
+$ kubectl pod-restarts -n vault --sort-by=start
+
 Flags:
   -c, --containers         Also lists containers restarts, ignoring thresholds
   -h, --help               help for pod-restarts
